@@ -1,19 +1,26 @@
-<?php
-	session_start();
-	require_once('NoCSRF/nocsrf.php');
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"])) {
-		if ($_SESSION["nivel"]==0) {
-			header("location: administrador/administrador.php");
-		}elseif ($_SESSION["nivel"]==1) {
-			header("location: agronomo/agronomo.php");
-		}else{
-			header("location: cliente/cliente.php");
-		}
 
-	}else{
+<?php
+session_start();
+include_once 'request.php';
+validNivel();
+if(isset($_POST['email']) && isset($_POST['passwd'])){
+	$request=new request();
+	$request->data=json_encode(array(
+		"email"=>$_POST['email'],
+		"password"=>$_POST['passwd']
+	));
+	$request->url="http://localhost/agroSmart/api/usuarios/login.php";
+	$result= json_decode($request->sendPost(), true);
+	if(isset($result['jwt'])){
+		$_SESSION['jwt']=$result['jwt'];
+		$_SESSION['nombre']=$result['nombre'];
+		$_SESSION['nivel']=$result['nivel'];
+		validNivel();
+	}
+}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 	<head>
 		<meta charset="UTF-8">
 		<title>Inicio de seccion</title>
@@ -22,21 +29,13 @@
 	</head>
 	<body>
 		<img class="logo" src="img/logo.png">
-		<?php
-			if (isset($_GET["error"])) {
-				if ($_GET["error"]==1) {
-					echo "<h4 class=\"msg\">Usuario o contrase&ntilde;a invalidas</h4>";
-				}
-			}
-		 ?>
-		<form method="post" action="validacion.php">
+		<?php if(isset($result['message'])){
+			echo '<h4 class="msg">'.$result['message'].'</h4>';
+		} ?>
+		<form method="post" action="">
 		  <input type="email" name="email" placeholder="Email"/>
 		  <input type="password" name="passwd" placeholder="Contrase&ntilde;a" />
-		  <input type="hidden" name="_token" value="<?php echo NoCSRF::generate('_token'); ?>">
-		  <input type="submit" value="Entrar" />
+		  <input type="submit" value="Entrar"/>
 		</form>
 	</body>
 </html>
-<?php
-}
- ?>

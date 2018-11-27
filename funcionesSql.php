@@ -275,6 +275,7 @@ class sql{
         try{
             $comando=conexion::getInstance()->getDb()->prepare($consulta);
             $comando->execute(array($id));
+
         }catch(PDOExection $e){
             return 0;
         }

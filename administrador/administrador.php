@@ -12,6 +12,9 @@
         $result_F=json_decode($request->sendPost(),true);
         $request->url="http://localhost/agroSmart/api/equipos/count.php";
         $result_E=json_decode($request->sendPost(),true);
+        if(isset($result_E['message']) || isset($result_F['message']) || isset($result_U['message'])){
+            echo '<h5 class="msg">'.$result_E['message']." ".$result_F['message']." ".$result_U['message'].'</h5>';
+        }else{
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,22 +57,22 @@
             </nav>
         </header>
         <main>
-            <div class="bienvenida">
-                <img src="http://placeimg.com/1000/300/any">
-                <h2><?php echo $_SESSION['nombre']; ?> <BR>Bienvenido/a a <br>Smart Agroindustry</h2>
-            </div>
-            <div class="datacontent">
-                <article class="data">
-                    <h4>Usuarios</h4><p><?php echo $result['usuarios_0']+$result['usuarios_1']+$result['usuarios_2']; ?></p>
-                    <div class="data2">
-                        <div class="dataitem"><h6>Administradores</h6><p><?php echo $result_U['usuarios_0']; ?></p></div>
-                        <div class="dataitem"><h6>Agronomos</h6><p><?php echo $result_U['usuarios_1']; ?></p></div>
-                        <div class="dataitem"> <h6>Clientes</h6><p><?php echo $result_U['usuarios_2']; ?></p></div>
-                    </div>
-                </article>
-                <article class="data"><h4>Fincas</h4><p><?php echo $result_F['fincas']; ?></p></article >
-                <article class="data"><h4>Equipos</h4><p><?php echo $result_E['equipos']; ?></p></article>
-            </div>
+        <div class="bienvenida">
+            <img src="http://placeimg.com/1000/300/any">
+            <h2><?php echo $_SESSION['nombre']; ?> <BR>Bienvenido/a a <br>Smart Agroindustry</h2>
+        </div>
+        <div class="datacontent">
+            <article class="data">
+                <h4>Usuarios</h4><p><?php echo $result['usuarios_0']+$result['usuarios_1']+$result['usuarios_2']; ?></p>
+                <div class="data2">
+                    <div class="dataitem"><h6>Administradores</h6><p><?php echo $result_U['usuarios_0']; ?></p></div>
+                    <div class="dataitem"><h6>Agronomos</h6><p><?php echo $result_U['usuarios_1']; ?></p></div>
+                    <div class="dataitem"> <h6>Clientes</h6><p><?php echo $result_U['usuarios_2']; ?></p></div>
+                </div>
+            </article>
+            <article class="data"><h4>Fincas</h4><p><?php echo $result_F['fincas']; ?></p></article >
+            <article class="data"><h4>Equipos</h4><p><?php echo $result_E['equipos']; ?></p></article>
+        </div>
         </main>
         <footer>
             <p>Smart Agroindustry &copy; 2018 by <span>Cesar Contreras</span></p>
@@ -78,6 +81,7 @@
 </body>
 </html>
 <?php
+        }
     }else{
         header('location: ../');
     }

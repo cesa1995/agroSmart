@@ -1,9 +1,16 @@
 <?php
-	session_start();
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"]) and $_SESSION["nivel"]==0){
-        include '../../funcionesSql.php';
-        $result=sql::fincas();
-        foreach($result as $row);
+    session_start();
+    if(isset($_SESSION['nivel']) && $_SESSION['nivel']==0){
+        include_once '../../request.php';
+        $request = new request();
+        $request->data=json_encode(array(
+            "jwt"=>$_SESSION['jwt']
+        ));
+        $request->url="http://localhost/agroSmart/api/fincas/read.php";
+        $result_F=json_decode($request->sendPost(),true);
+        if(isset($result_F['message'])){
+            echo '<h5 class="error">'.$result_F['message'].'</h5>';
+        }else{
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,20 +31,25 @@
         <div class="lista">
             <ul id="listausu" class="lista">
         <?php
-                $resultusu=sql::usuariosByNivel(1,2);
-                foreach ($resultusu as $rowusu) {
+                $request->data=json_encode(array(
+                    "jwt"=>$_SESSION['jwt']
+                ));
+                $request->url="http://localhost/agroSmart/api/usuarios/read_nivel.php";
+                $result_U=json_decode($request->sendPost(),true);
+                foreach ($result_U['records'] as $row) {
                     ?>
                     <li>
-                        <p><?php echo $rowusu['email']; ?></p>
-                        <p><?php echo $rowusu['nombre']; ?></p>
+                        <p><?php echo $row['email']; ?></p>
+                        <p><?php echo $row['message'];?></p>
+                        <p><?php echo $row['nombre']; ?></p>
                         <p><?php
-                            if ($rowusu['nivel'] == 1){
+                            if ($row['nivel'] == 1){
                                 echo "Agronomo";
-                            }else if($rowusu['nivel'] == 2){
+                            }else if($row['nivel'] == 2){
                                 echo "Cliente";
                             } ?>
                         </p>
-                        <a href="addusu.php?idusu=<?php echo $rowusu['id']; ?>&idfin=<?php echo $_GET['id']; ?>">&#43;</a>
+                        <a href="addusu.php?idusu=<?php echo $row['id']; ?>&idfin=<?php echo $_GET['id']; ?>">&#43;</a>
                     </li>
                     <?php
                 }
@@ -52,12 +64,16 @@
         <div class="lista">
             <ul id="listaequ" class="lista">
                 <?php
-                    $resultequ=sql::equipos();
-                    foreach ($resultequ as $rowequ) {
+                    $request->data=json_encode(array(
+                        "jwt"=>$_SESSION['jwt']
+                    ));
+                    $request->url="http://localhost/agroSmart/api/equipos/read.php";
+                    $result_E=json_decode($request->sendPost(),true);
+                    foreach ($result_E['records'] as $row) {
                     ?>
                         <li>
-                            <p><?php echo $rowequ['nombre']; ?></p>
-                            <a href="addequ.php?idequ=<?php echo $rowequ['id']; ?>&idfin=<?php echo $_GET['id']; ?>">&#43;</a>
+                            <p><?php echo $row['nombre']; ?></p>
+                            <a href="addequ.php?idequ=<?php echo $row['id']; ?>&idfin=<?php echo $_GET['id']; ?>">&#43;</a>
                         </li>
                     <?php
                     }
@@ -94,9 +110,9 @@
     	</nav>
 	</header>
     <main>
-		<?php if (isset($_GET["error"])) {
+        <?php if (isset($_GET["error"])) {
 				if ($_GET["error"]==0) {
-					echo "<h4 class=\"error\">Este usuario ya ha sido agregado</h4>";
+					echo "<h4 class=\"error\">".$_GET['error']."</h4>";
 				}
         } ?>
         <div class="minimenu" id="minimenu">
@@ -110,53 +126,67 @@
             onMouseOut="mouseOut('ausuarios','equipos')">Finca-Usuarios</a>
         </div>
         <div class="info">
-            <div id="fincas" class="asociar">
-                <?php
-                $resultf=sql::fincasByID($_GET['id']);
-                foreach($resultf as $rowf);
+            <?php
+                if(isset($_GET['id'])){
+                    $request->data=json_encode(array(
+                        "jwt"=>$_SESSION['jwt'],
+                        "id"=>$_GET['id']
+                    ));
+                    $request->url="http://localhost/agroSmart/api/fincas/read_one.php";
+                    $result_FOne=json_decode($request->sendPost(),true);
+                    $request->data=json_encode(array(
+                        "jwt"=>$_SESSION['jwt'],
+                        "fincaid"=>$_GET['id']
+                    ));
+                    $request->url="http://localhost/agroSmart/api/asociar/readusuarios.php";
+                    $result_FUsu=json_decode($request->sendPost(),true);
+                    $request->url="http://localhost/agroSmart/api/asociar/readequipos.php";
+                    $result_FEqu=json_decode($request->sendPost(),true);
+                }
             ?>
-            <h5><?php
-            if(isset($_GET['id'])){
-                echo "Finca seleccionada: ".$rowf['nombre'];
-            }else{
-                echo "Seleccione una finca a configurar";
-            } ?></h5>
-            <input type="text" class="buscar" id="buscarfin" onkeyup="buscar('buscarfin','listafin')" placeholder="Buscar Equipos">
+            <div id="fincas" class="asociar">
+                <h5><?php
+                    if(isset($result_FOne)){
+                        echo "Finca seleccionada: ".$result_FOne['nombre'];
+                    }else{
+                        echo "Seleccione una finca a configurar";
+                    } ?>
+                </h5>
+                <input type="text" class="buscar" id="buscarfin" onkeyup="buscar('buscarfin','listafin')" placeholder="Buscar Equipos">
                 <div class="lista">
                     <ul class="lista" id="listafin">
-                <?php
-                        foreach($result as $row){
-                            ?>
-                            <li>
-                                <p><?php echo $row['nombre'];?></p>
-                                <a href="?id=<?php echo $row['id']; ?>">Seleccionar</a>
-                            </li>
-                            <?php
+                    <?php
+                        foreach($result_F['records'] as $row){
+                    ?>
+                        <li>
+                            <p><?php echo $row['nombre'];?></p>
+                            <a href="?id=<?php echo $row['id']; ?>">Seleccionar</a>
+                        </li>
+                    <?php
                         }
                     ?>
                     </ul>
                 </div>
             </div>
-            <div id="equipos" class="asociar">
+           <div id="equipos" class="asociar">
                 <h5>Usuarios Agregados</h5>
                 <div class="agregar"><a onClick="mostraragregar('agregarusu')" style='cursor: pointer;'>&#43;</a></div>
                 <input type="text" class="buscar" id="buscarusua" onkeyup="buscar('buscarusua','listausua')" placeholder="Buscar Equipos">
                 <div class="lista">
                     <ul class="lista" id="listausua">
                         <?php
-                            $resultusus=sql::fincausuByID($_GET['id']);
-                            foreach($resultusus as $rowusus){
+                            foreach($result_FUsu['records'] as $row){
                                ?>
                                 <li>
-                                    <p><?php echo $rowusus['nombre'] ?></p>
+                                    <p><?php echo $row['usuario'] ?></p>
                                     <p><?php
-                                    if($rowusus['nivel']==1){
+                                    if($row['nivel']==1){
                                         echo "Agronomo";
                                     }else{
                                         echo "Cliente";
                                     }
                                     ?></p>
-                                    <a href="eliusu.php?idfin=<?php echo $_GET['id']; ?>&fincausuid=<?php echo $rowusus['id'];?>">&#45;</a>
+                                    <a href="eliusu.php?idfin=<?php echo $_GET['id']; ?>&fincausuid=<?php echo $row['id'];?>">&#45;</a>
                                 </li>
                                <?php
                             }
@@ -171,18 +201,17 @@
                 <div class="lista">
                     <ul class="lista" id="listaequa">
                         <?php
-                            $resultequs=sql::fincaequByID($_GET['id']);
-                            foreach($resultequs as $rowequs){
+                            foreach($result_FEqu['records'] as $row){
                                ?>
                                 <li>
-                                    <p><?php echo $rowequs['nombre'] ?></p>
+                                    <p><?php echo $row['equipo'] ?></p>
                                     <p><?php
-                                    if($rowequs['estado']==0){
+                                    if($row['estado']==0){
                                         echo "Inactivo";
                                     }else{
                                         echo "Activo";
                                     }?></p>
-                                    <a href="eliequ.php?idfin=<?php echo $_GET['id']; ?>&fincaequid=<?php echo $rowequs['id'];?>">&#45;</a>
+                                    <a href="eliequ.php?idfin=<?php echo $_GET['id']; ?>&fincaequid=<?php echo $row['id'];?>">&#45;</a>
                                 </li>
                                <?php
                             }
@@ -190,7 +219,6 @@
                     </ul>
                 </div>
             </div>
-        </div>
         <?php
         if(!isset($_GET['id'])){
             echo "<script>";
@@ -217,7 +245,8 @@
 </body>
 </html>
 <?php
-}else{
-header("location: ../../");
-}
+        }
+    }else{
+        header("location: ../../");
+    }
 ?>

@@ -1,11 +1,36 @@
 <?php
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"]) and $_SESSION["nivel"]==0){
+	if (isset($_SESSION["nivel"]) && $_SESSION["nivel"]==0){
+		require '../../request.php';
+		$request=new request();
+		if (isset($_POST["_token"]) and $_SESSION["nivel"]==0) {
+			if(NoCSRF::check('_token', $_POST, false, 60*10, false)){
+				$nombre = $_POST['nombre'];
+				$apellido = $_POST['apellido'];
+				$nivel = $_POST['nivel'];
+				$id = $_POST['id'];
+				$request->data=json_encode(array(
+					"id"=>$id,
+					"nombre"=>$nombre,
+					"apellido"=>$apellido,
+					"nivel"=>$nivel,
+					"jwt"=>$_SESSION['jwt']
+				));
+				$request->url="http://localhost/agroSmart/api/usuarios/update.php";
+				$result_0=json_decode($request->sendPost(),true);
+			}
+		}else{
+			$result_0['message']="token incorrecto";
+		}
 		if (isset($_GET['id'])){
-			require '../../funcionesSql.php';
-			$result = sql::usuariosByID($_GET['id']);
-			foreach ($result as $row);
+			$id=$_GET['id'];
+			$request->data=json_encode(array(
+				"id"=>$id,
+				"jwt"=>$_SESSION['jwt']
+			));
+			$request->url="http://localhost/agroSmart/api/usuarios/read_one.php";
+			$result_1=json_decode($request->sendPost(),true);
 		?>
 <!DOCTYPE html>
 <html lang="en">
@@ -47,25 +72,27 @@
     	</nav>
 	</header>
 	<main>
+		<?php
+		if (isset($result_0['message'])) {
+			$message=$result_0['message'];
+		}
+		if(isset($result_1['message'])){
+			$message=$message." ".$result_1;
+		}
+		echo "<h4 class=\"error\">".$message."</h4>";
+		?>
 		<h1 class="titulo">Modificar Usuario</h1>
-		<?php if (isset($_GET["error"])) {
-			if ($_GET["error"]==0) {
-				echo "<h4 class=\"error\">Modificado con exito</h4>";
-			}elseif ($_GET["error"]==2) {
-				echo "<h4 class=\"error\">Intentar de Nuevo</h4>";
-			}
-		} ?>
 		<div class="formulario">
-			<form action="modifuserV.php" method="post">
-				<input type="text" name="nombre" placeholder="Nombre" required value="<?php echo $row['nombre']; ?>">
-				<input type="text" name="apellido" placeholder="Apellido" required value="<?php echo $row['apellido']; ?>">
+			<form action="" method="post">
+				<input type="text" name="nombre" placeholder="Nombre" required value="<?php echo $result_1['nombre']; ?>">
+				<input type="text" name="apellido" placeholder="Apellido" required value="<?php echo $result_1['apellido']; ?>">
 				<select name="nivel" >
 					<option value="2">Cliente</option>
 					<option value="0">Administrador</option>
 					<option value="1">Agronomo</option>
 				</select>
 				<input type="hidden" name="_token" value="<?php echo NoCSRF::generate('_token'); ?>">
-				<input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+				<input type="hidden" name="id" value="<?php echo $id; ?>">
 				<input type="submit" value="Guardar">
 			</form>
 		</div>

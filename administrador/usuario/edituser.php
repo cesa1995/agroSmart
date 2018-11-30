@@ -1,7 +1,19 @@
 <?php
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"]) and $_SESSION["nivel"]==0){
+	if (isset($_SESSION["nivel"]) && $_SESSION["nivel"]==0){
+        require '../../request.php';
+        $request= new request();
+        if(isset($_GET['id'])){
+            $id=$_GET['id'];
+            $request->data=json_encode(array(
+                "id"=>$id,
+                "jwt"=>$_SESSION['jwt']
+            ));
+            $request->url="http://localhost/agroSmart/api/usuarios/delete.php";
+            $result=json_decode($request->sendPost(),true);
+        }
+
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,6 +55,11 @@
     	</nav>
 	</header>
     <main>
+        <?php
+        if(isset($result['message'])){
+            echo "<h4 class=\"error\">".$result['message']."</h4>";
+        }
+        ?>
         <table>
             <caption><h1>Usuarios Registrados</h1></caption>
             <thead>
@@ -56,9 +73,12 @@
             </thead>
             <tbody>
             <?php
-            require '../../funcionesSql.php';
-                $result=sql::usuarios();
-                foreach ($result as $row){
+                $request->data=json_encode(array(
+                    "jwt"=>$_SESSION['jwt']
+                ));
+                $request->url="http://localhost/agroSmart/api/usuarios/read.php";
+                $result=json_decode($request->sendPost(),true);
+                foreach ($result['records'] as $row){
             ?>
                 <tr>
                     <td><?php echo $row['id']; ?></td>
@@ -73,7 +93,7 @@
                         echo "Cliente";
                     } ?></td>
                     <td><a href="modifuser.php?id=<?php echo $row['id']; ?>">Editar</a></td>
-                    <td><a href="deleuser.php?id=<?php echo $row['id']; ?>">Eliminar</a></td>
+                    <td><a href="?id=<?php echo $row['id']; ?>">Eliminar</a></td>
                 </tr>
             <?php } ?>
             </tbody>

@@ -1,8 +1,24 @@
 <?php
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"]) and $_SESSION["nivel"]==0){
-		if(isset($_GET['id'])){
+	if (isset($_SESSION["nivel"]) && $_SESSION["nivel"]==0 && isset($_GET['id'])){
+		if (isset($_POST["_token"]) and $_SESSION["nivel"]==0) {
+			include '../../request.php';
+			if(NoCSRF::check('_token', $_POST, false, 60*10, false)){
+				$password1=$_POST['password1'];
+				$password2=$_POST['password2'];
+				$id = $_POST['id'];
+				$request=new request();
+				$request->data=json_encode(array(
+					"id"=>$id,
+					"pass1"=>$password1,
+					"pass2"=>$password2,
+					"jwt"=>$_SESSION['jwt']
+				));
+				$request->url="http://localhost/agroSmart/api/usuarios/updatePass.php";
+				$result=json_decode($request->sendPost(),true);
+			}
+		}
 		?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,19 +61,14 @@
 	</header>
 	<main>
 		<h1 class="titulo">Modificar Usuario</h1>
-		<?php if (isset($_GET["error"])) {
-			if ($_GET["error"]==0) {
-				echo "<h4 class=\"error\">Modificado con exito</h4>";
-			}elseif ($_GET["error"]==2) {
-				echo "<h4 class=\"error\">Intentar de Nuevo</h4>";
-			}else{
-				echo "<h4 class=\"error\">Las contraseñas no sos iguales</h4>";
-			}
+		<?php 
+		if (isset($result['message'])){
+			echo "<h4 class=\"error\">".$result['message']."</h4>";
 		} ?>
 		<div class="formulario">
-			<form action="resetpassV.php" method="post">
-				<input type="password" name="ncontrasena" placeholder="Nueva Contrase&ntilde;a" autofocus required>
-				<input type="password" name="rcontrasena" placeholder="Repetir Contrase&ntilde;a" required>
+			<form action="" method="post">
+				<input type="password" name="password1" placeholder="Nueva Contrase&ntilde;a" autofocus required>
+				<input type="password" name="password2" placeholder="Repetir Contrase&ntilde;a" required>
 				<input type="hidden" name="_token" value="<?php echo NoCSRF::generate('_token'); ?>">
 				<input type="hidden" name="id" value="<?php echo $_GET['id']; ?>">
 				<input type="submit" value="Modificar">
@@ -70,9 +81,6 @@
 </body>
 </html>
 <?php
-	}else{
-		header("location: ../../");
-	}
 }else{
 	header("location: ../../");
 }

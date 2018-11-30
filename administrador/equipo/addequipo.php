@@ -2,6 +2,23 @@
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
 	if (isset($_SESSION['nivel']) && $_SESSION["nivel"]==0){
+        if (isset($_POST["_token"])) {
+            if (NoCSRF::check('_token',$_POST,false,60*10,false)) {
+                include '../../request.php';
+                $nombre=$_POST["nombre"];
+                $descripcion=$_POST["descripcion"];
+                $type=$_POST["tipo"];
+                $request=new request();
+                $request->data=json_encode(array(
+                    "nombre"=>$nombre,
+                    "devicetype"=>$type,
+                    "descripcion"=>$descripcion,
+                    "jwt"=>$_SESSION['jwt']
+                ));
+                $request->url="http://localhost/agroSmart/api/equipos/create.php";
+                $result=json_decode($request->sendPost(),true);
+            }
+        }
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,16 +61,13 @@
 	</header>
 	<main>
 		<h1 class="titulo">Agregar Equipo</h1>
-		<?php if (isset($_GET["error"])) {
-				if ($_GET["error"]!==2) {
-					echo "<h4 class=\"error\">".$_GET['error']."</h4>";
-				}elseif($_GET["error"]==2){
-					echo "<h4 class=\"error\">Token Incorrecto</h4>";
-				}
+        <?php
+        if (isset($result["message"])) {
+			echo "<h4 class=\"error\">".$result['message']."</h4>";
         } ?>
         <div class="forms">
             <div class="formulario">
-                <form action="addequipoV.php" method="post">
+                <form action="" method="post">
                     <input type="text" name="nombre" placeholder="Nombre" autofocus required>
                     <input type="text" name="tipo" placeholder="Tipo de dispositivo" required>
                     <textarea type="text" name="descripcion" placeholder="Descripcion del dispositivo" required></textarea>

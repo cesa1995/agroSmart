@@ -2,16 +2,36 @@
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
 	if (isset($_SESSION["nivel"]) && $_SESSION["nivel"]==0){
+		include '../../request.php';
+		$request=new request();
+		if(isset($_POST['_token'])){
+			if(NoCSRF::check('_token', $_POST, false, 60*10, false)){
+				$id = $_POST['id'];
+				$nombre = $_POST['nombre'];
+				$devicetype = $_POST['tipo'];
+				$descripcion = $_POST['descripcion'];
+				$request=new request();
+				$request->data=json_encode(array(
+					"id"=>$id,
+					"nombre"=>$nombre,
+					"devicetype"=>$devicetype,
+					"descripcion"=>$descripcion,
+					"jwt"=>$_SESSION['jwt']
+				));
+				$request->url="http://localhost/agroSmart/api/equipos/update.php";
+				$result_0=json_decode($request->sendPost(),true);
+			}else{
+				$result_0['message']="token incorrecto";
+			}
+		}
 		if (isset($_GET["id"])) {
-			include '../../request.php';
 			$id=$_GET['id'];
-			$request=new request();
 			$request->data=json_encode(array(
 				"id"=>$id,
 				"jwt"=>$_SESSION['jwt']
 			));
 			$request->url="http://localhost/agroSmart/api/equipos/read_one.php";
-			$result=json_decode($request->sendPost(),true);
+			$result_1=json_decode($request->sendPost(),true);
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -54,20 +74,22 @@
 	</header>
 	<main>
 		<h1 class="titulo">Modificar Equipo</h1>
-		<?php if (isset($_GET["error"])) {
-				if ($_GET["error"]==0) {
-					echo "<h4 class=\"error\">Equipo modificada con exito</h4>";
-				}elseif($_GET["error"]==2){
-					echo "<h4 class=\"error\">Token Incorrecto</h4>";
-				}
-		} ?>
+		<?php
+		if(isset($result_0["message"])){
+			$message=$result_0["message"];
+		}
+		if(isset($result_1["message"])){
+			$message=$message.$result_1["message"];
+		}
+			echo "<h4 class=\"error\">".$message."</h4>";
+		?>
 		<div class="formulario">
-			<form action="modifequipoV.php" method="post">
-				<input type="text" name="nombre" placeholder="Nombre" value="<?php echo $result["nombre"]; ?>" autofocus required>
-				<input type="text" name="tipo" placeholder="Tipo de dispositivo" value="<?php echo $result["devicetype"]; ?>" required>
-				<textarea type="text" name="descripcion" placeholder="Descripcion" required><?php echo $result["descripcion"]; ?></textarea>
+			<form action="" method="post">
+				<input type="text" name="nombre" placeholder="Nombre" value="<?php echo $result_1["nombre"]; ?>" autofocus required>
+				<input type="text" name="tipo" placeholder="Tipo de dispositivo" value="<?php echo $result_1["devicetype"]; ?>" required>
+				<textarea type="text" name="descripcion" placeholder="Descripcion" required><?php echo $result_1["descripcion"]; ?></textarea>
 				<input type="hidden" name="_token" value="<?php echo NoCSRF::generate('_token'); ?>">
-				<input type="hidden" name="id" value="<?php echo $result["id"]; ?>">
+				<input type="hidden" name="id" value="<?php echo $_GET["id"]; ?>">
 				<input type="submit" value="Modificar">
 			</form>
 		</div>

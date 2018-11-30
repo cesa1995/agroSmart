@@ -1,11 +1,17 @@
 <?php
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"]) and $_SESSION["nivel"]==0){
+	if (isset($_SESSION["nivel"]) && $_SESSION["nivel"]==0){
 		if (isset($_GET["id"])) {
-			include '../../funcionesSql.php';
-			$result = sql::fincasByID($_GET['id']);
-			foreach ($result as $row);
+			include '../../request.php';
+			$id=$_GET['id'];
+			$request= new request();
+			$request->data=json_encode(array(
+				"id"=>$id,
+				"jwt"=>$_SESSION['jwt']
+			));
+			$request->url="http://localhost/agroSmart/api/fincas/read_one.php";
+			$result=json_decode($request->sendPost(),true);
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,21 +55,19 @@
 	<main>
 		<h1 class="titulo">Modificar Finca</h1>
 		<?php if (isset($_GET["error"])) {
-				if ($_GET["error"]==0) {
-					echo "<h4 class=\"error\">Finca modificada con exito</h4>";
-				}elseif($_GET["error"]==1){
-					echo "<h4 class=\"error\">Numero de telefono no valido</h4>";
+				if ($_GET["error"]!==0) {
+					echo "<h4 class=\"error\">".$_GET['error']."</h4>";
 				}elseif($_GET["error"]==2){
 					echo "<h4 class=\"error\">Token Incorrecto</h4>";
 				}
 		} ?>
 		<div class="formulario">
 			<form action="modiffincaV.php" method="post">
-				<input type="text" name="nombre" placeholder="Nombre" value="<?php echo $row["nombre"]; ?>" autofocus required>
-				<input type="tel" name="telefono" placeholder="Telefono" value="<?php echo $row["telefono"]; ?>" required>
-				<textarea type="text" name="adress" placeholder="Direccion" required><?php echo $row["direccion"]; ?></textarea>
+				<input type="text" name="nombre" placeholder="Nombre" value="<?php echo $result["nombre"]; ?>" autofocus required>
+				<input type="tel" name="telefono" placeholder="Telefono" value="<?php echo $result["telefono"]; ?>" required>
+				<textarea type="text" name="adress" placeholder="Direccion" required><?php echo $result["direccion"]; ?></textarea>
 				<input type="hidden" name="_token" value="<?php echo NoCSRF::generate('_token'); ?>">
-				<input type="hidden" name="id" value="<?php echo $row["id"]; ?>">
+				<input type="hidden" name="id" value="<?php echo $result["id"]; ?>">
 				<input type="submit" value="Modificar">
 			</form>
 		</div>

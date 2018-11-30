@@ -1,12 +1,17 @@
 <?php
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"]) and $_SESSION["nivel"]==0){
+	if (isset($_SESSION["nivel"]) && $_SESSION["nivel"]==0){
 		if (isset($_GET["id"])) {
-			include '../../funcionesSql.php';
+			include '../../request.php';
 			$id=$_GET['id'];
-			$result=sql::equiposByID($id);
-			foreach ($result as $row);
+			$request=new request();
+			$request->data=json_encode(array(
+				"id"=>$id,
+				"jwt"=>$_SESSION['jwt']
+			));
+			$request->url="http://localhost/agroSmart/api/equipos/read_one.php";
+			$result=json_decode($request->sendPost(),true);
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,11 +63,11 @@
 		} ?>
 		<div class="formulario">
 			<form action="modifequipoV.php" method="post">
-				<input type="text" name="nombre" placeholder="Nombre" value="<?php echo $row["nombre"]; ?>" autofocus required>
-				<input type="text" name="tipo" placeholder="Tipo de dispositivo" value="<?php echo $row["devicetype"]; ?>" required>
-				<textarea type="text" name="descripcion" placeholder="Descripcion" required><?php echo $row["descripcion"]; ?></textarea>
+				<input type="text" name="nombre" placeholder="Nombre" value="<?php echo $result["nombre"]; ?>" autofocus required>
+				<input type="text" name="tipo" placeholder="Tipo de dispositivo" value="<?php echo $result["devicetype"]; ?>" required>
+				<textarea type="text" name="descripcion" placeholder="Descripcion" required><?php echo $result["descripcion"]; ?></textarea>
 				<input type="hidden" name="_token" value="<?php echo NoCSRF::generate('_token'); ?>">
-				<input type="hidden" name="id" value="<?php echo $row["id"]; ?>">
+				<input type="hidden" name="id" value="<?php echo $result["id"]; ?>">
 				<input type="submit" value="Modificar">
 			</form>
 		</div>

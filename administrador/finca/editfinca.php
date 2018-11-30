@@ -1,7 +1,7 @@
 <?php
 	session_start();
 	require_once('../../NoCSRF/nocsrf.php');
-	if (isset($_SESSION["usuario"]) and isset($_SESSION["id"]) and $_SESSION["nivel"]==0){
+	if (isset($_SESSION["nivel"]) && $_SESSION["nivel"]==0){
  ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -56,9 +56,14 @@
             </thead>
             <tbody>
             <?php
-            include '../../funcionesSql.php';
-                $result=sql::fincas();
-                foreach ($result as $row){
+            include '../../request.php';
+            $request= new request();
+            $request->data=json_encode(array(
+                "jwt"=>$_SESSION['jwt']
+            ));
+            $request->url="http://localhost/agroSmart/api/fincas/read.php";
+            $result=json_decode($request->sendPost(),true);
+            foreach ($result['records'] as $row){
             ?>
                 <tr>
                     <td><?php echo $row['id']; ?></td>

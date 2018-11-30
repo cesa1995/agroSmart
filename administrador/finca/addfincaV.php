@@ -4,16 +4,19 @@
 	if (isset($_POST["_token"]) and $_SESSION["nivel"]==0) {
 		if (NoCSRF::check('_token', $_POST, false, 60*10, false)) {
 			$telefono=$_POST["telefono"];
-			$expresion='/^(\+?[0-9]{9,13})$/';
-			if (preg_match($expresion,$telefono)) {
-				include '../../funcionesSql.php';
-				$nombre=$_POST["nombre"];
-				$direccion=$_POST["adress"];
-				sql::addFincas($nombre,$telefono,$direccion);
-				header("location: addfinca.php?error=0");
-			}else{
-				header("location: addfinca.php?error=1");
-			}
+			include '../../request.php';
+			$nombre=$_POST["nombre"];
+			$direccion=$_POST["adress"];
+			$request=new request();
+			$request->data=json_encode(array(
+				"nombre"=>$nombre,
+				"telefono"=>$telefono,
+				"direccion"=>$direccion,
+				"jwt"=>$_SESSION['jwt']
+			));
+			$request->url="http://localhost/agroSmart/api/fincas/create.php";
+			$resutl=json_decode($request->sendPost(),true);
+			header("location: addfinca.php?error=".$resutl['message']);
 		}else{
 			die(header("location: addfinca.php?error=2"));
 		}

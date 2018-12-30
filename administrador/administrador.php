@@ -63,7 +63,7 @@
         </div>
         <div class="datacontent">
             <article class="data">
-                <h4>Usuarios</h4><p><?php echo $result['usuarios_0']+$result['usuarios_1']+$result['usuarios_2']; ?></p>
+                <h4>Usuarios</h4><p><?php echo $result_U['usuarios_0']+$result_U['usuarios_1']+$result_U['usuarios_2']; ?></p>
                 <div class="data2">
                     <div class="dataitem"><h6>Administradores</h6><p><?php echo $result_U['usuarios_0']; ?></p></div>
                     <div class="dataitem"><h6>Agronomos</h6><p><?php echo $result_U['usuarios_1']; ?></p></div>
